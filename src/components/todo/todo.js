@@ -6,112 +6,92 @@ import Header from '../header';
 import Form from '../../form';
 import List from '../list'
 import './todo.scss';
+import {useState, useReducer} from 'react';
 
-class ToDo extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      todoList: [],
-      item: {},
-      showDetails: false,
-      details: {},
-    };
-  }
+export default function ToDo(){
 
-  handleInputChange = e => {
+  const initialList = []
+  let [todoList, setToDolist] = useState(initialList);
+
+  const initialItem = {};
+  let [item, setItem] = useState(initialItem);
+
+  const initialDetails = {};
+  let [details, setDetails] = useState(initialDetails);
+
+  const initialShow = false;
+  let [showDetails, setShowDetails] = useState(initialShow);
+
+
+  let handleInputChange = e => {
     let { name, value } = e.target;
-    this.setState(state => ({
-      item: {...state.item, [name]: value},
+    setItem(state => ({
+     ...state, [name]: value
     }));
   };
 
-  handleSubmit = (e) => {
-    this.props.handleSubmit(this.state.item);
-  };
-
-  addItem = (e) => {
+  let addItem = (e) => {
 
     e.preventDefault();
     e.target.reset();
 
-    const defaults = { _id: uuid(), complete:false };
-    const item = Object.assign({}, this.state.item, defaults);
-
-    this.setState(state => ({
-      todoList: [...state.todoList, item],
-      item: {},
-    }));
+    item['_id']=uuid();
+    item['complete'] = false;
+    
+    setToDolist(state => ([...todoList, item]));
+    setItem(()=> ({}));
 
   };
 
-  deleteItem = id => {
-
-    this.setState(state => ({
-      todoList: state.todoList.filter(item => item._id !== id),
-    }));
-
+  let deleteItem = id => {
+    let newList = todoList.filter(item => item._id !== id)
+    setToDolist(newList);
   };
 
-  saveItem = updatedItem => {
-
-    this.setState(state => ({
-      todoList: state.todoList.map(item =>
-        item._id === updatedItem._id ? updatedItem : item
-      ),
-    }));
-
-  };
-
-  toggleComplete = id => {
-    this.setState(state => ({
-      todoList: state.todoList.map(item =>
+  let toggleComplete = id => {
+    setToDolist(
+      todoList.map(item =>
         item._id === id ? {
           ...item,
           complete: !item.complete,
-        } : item
-      ),
-    }));
+        } :item
+      )
+    )
   };
 
-  toggleDetails = id => {
-    this.setState(state => {
-      let item = state.todoList.find(item => item._id === id);
-      return {
-        details: item || {},
-        showDetails: !!item,
-      };
-    });
+  let toggleDetails = id => {
+    let toggledItem = todoList.find(item => item._id === id);
+    setDetails(toggledItem || {});
+    setShowDetails(!!toggledItem);
   }
-
-  render() {
 
     return (
       <>
         <Header 
-          todoList={this.state.todoList}
+          todoList={todoList}
         />
         <section className="todo">
 
           <Form
-           addItem={this.addItem}
-           handleInputChange={this.handleInputChange}
+           addItem={addItem}
+           handleInputChange={handleInputChange}
           />
           <List
-          todoList={this.state.todoList}
-          toggleComplete={this.toggleComplete}
-          toggleDetails={this.toggleDetails}
-          deleteItem={this.deleteItem}
+          todoList={todoList}
+          toggleComplete={toggleComplete}
+          toggleDetails={toggleDetails}
+          deleteItem={deleteItem}
           />
         </section>
-        <When condition={this.state.showDetails}>
-          <Modal title="To Do Item" close={this.toggleDetails}>
+        <When condition={showDetails}>
+          <Modal title="To Do Item" close={toggleDetails}>
             <div className="todo-details">
               <header>
-                <span>Assigned To: {this.state.details.assignee}</span>
-                <span>Due: {this.state.details.due}</span>
+                <span>Assigned To: {details.assignee}</span>
+                <span>Due: {details.due}</span>
               </header>
               <div className="item">
-                {this.state.details.text}
+                {details.text}
               </div>
             </div>
           </Modal>
@@ -119,6 +99,3 @@ class ToDo extends React.Component {
       </>
     );
   }
-}
-
-export default ToDo;
